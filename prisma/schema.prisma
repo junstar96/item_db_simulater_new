@@ -1,0 +1,83 @@
+// This isyourPrismaschemafile,
+//learnmoreaboutitinthedocs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Items {
+  itemId    Int      @id @default(autoincrement()) @map("ItemId")
+  name      String   @unique @map("name")
+  status    Json     @default("{ \"health\": \"power\" }") @map("status")
+  ItemPrice Int      @default(0) @map("ItemPrice")
+  ItemType  ItemType @default(ingredient) @map("ItemType")
+  
+  characterinventory CharacterInventory[]
+  @@map("Items")
+}
+
+model Users {
+  UserId   String @id @default(uuid()) @map("UserId")
+  name     String @unique @map("name")
+  password String @map("password")
+
+  UserCharacters UserCharacters[]
+
+  @@map("Users")
+}
+
+model UserCharacters {
+  charId    Int      @id @default(autoincrement()) @map("charId")
+  UserId    String   @map("UserId")
+  name      String   @unique @map("name")
+  level     Int      @map("level")
+  status    Json     @default("{ \"health\": \"power\" }") @map("status")
+  money     Int      @default(0) @map("money")
+  createdAt DateTime @default(now()) @map("createdAt")
+
+  equips CharacterEquipItems?
+  characterinventory CharacterInventory[]
+
+  user Users @relation(fields: [UserId], references: [UserId], onDelete: Cascade)
+
+  @@map("UserCharacters")
+}
+
+model CharacterInventory {
+  invenId Int @id @default(autoincrement()) @map("invenId")
+  charId  Int @map("charId")
+  itemId  Int @map("itemId")
+  count Int @default(0) @map("count")
+
+  character UserCharacters @relation(fields: [charId], references: [charId], onDelete  : Cascade, onUpdate: Cascade)
+  item Items @relation(fields: [itemId], references: [itemId], onDelete  : Cascade, onUpdate: Cascade)
+
+  @@map("CharacterInventory")
+}
+
+model CharacterEquipItems {
+  EquipId   Int @id @default(autoincrement()) @map("EquipId")
+  CharId     Int  @unique @map("CharId")
+  Equip_list Json @map("Equip_list")
+
+  char UserCharacters @relation(fields: [CharId], references: [charId], onDelete: Cascade, onUpdate: Cascade)
+  @@map("CharacterEquipItems")
+}
+
+enum ItemType {
+  potion
+  weapon
+  armor
+  pants
+  shoes
+  accessories
+  ingredient
+}
