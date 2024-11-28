@@ -37,23 +37,23 @@ router.post('/sign-up', async (req, res, next) => {
     }
 
 
-    
+
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const result = await prisma.$transaction(async (tx) => {
       // Users 테이블에 사용자를 추가합니다.
       const user = await tx.users.create({
         data: {
-          name : name,
+          name: name,
           password: hashedPassword
         },
       });
 
       return [user];
-    },{
-      isolationLevel : Prisma.TransactionIsolationLevel.ReadCommitted
+    }, {
+      isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted
     }
-  )
+    )
 
 
 
@@ -70,10 +70,45 @@ router.post('/sign-up', async (req, res, next) => {
 
 
 /** 로그인 API **/
-router.post('/sign-in', async (req, res, next) => {
+router.get('/sign-in', async (req, res, next) => {
+  try {
+    const { name, password } = req.body;
+    const user = await prisma.users.findFirst({ where: { name: name } });
+
+    if (!user)
+      return res.status(401).json({ message: '존재하지 않는 이메일입니다.' });
+    // 입력받은 사용자의 비밀번호와 데이터베이스에 저장된 비밀번호를 비교합니다.
+    else if (!(await bcrypt.compare(password, user.password)))
+      return res.status(401).json({ message: '비밀번호가 일치하지 않습니다.' });
+
+
+    const token = jwt.sign(
+      {
+        userId: user.UserId,
+      },
+      process.env.JSONWEBTOKEN_KEY,
+    );
+
+    res.cookie('authorization', `Bearer ${token}`);
+    res.userId = user.UserId
+
+
+    return res.status(200).json({ message: `${name} 님의 로그인에 성공했습니다.` });
+  }
+  catch {
+    return res.status(404).json({ message: '로그인 실패' });
+  }
+
+});
+
+router.get('/logout', UserToken, async (req, res, next) => {
   const { name, password } = req.body;
-  const user = await prisma.users.findFirst({ where: { name : name } });
-  console.log(user);
+  const { userId } = req.userId;
+  const user = await prisma.users.findFirst({ where: { name: name } });
+
+  if (!userId) {
+    return res.status(200).json({ message: '로그인 성공' });
+  }
 
   if (!user)
     return res.status(401).json({ message: '존재하지 않는 이메일입니다.' });
@@ -81,7 +116,7 @@ router.post('/sign-in', async (req, res, next) => {
   else if (!(await bcrypt.compare(password, user.password)))
     return res.status(401).json({ message: '비밀번호가 일치하지 않습니다.' });
 
-  
+
   const token = jwt.sign(
     {
       userId: user.UserId,
@@ -92,7 +127,7 @@ router.post('/sign-in', async (req, res, next) => {
   res.cookie('authorization', `Bearer ${token}`);
   res.userId = user.UserId
 
-  
+
   return res.status(200).json({ message: '로그인 성공' });
 });
 
@@ -108,63 +143,12 @@ router.get('/users', UserToken, async (req, res, next) => {
       email: true,
       createAt: true,
       updateAt: true,
-      
+
     },
   });
 
   return res.status(200).json({ data: "읽기 성공" });
 });
-
-// src/routes/users.router.js
-
-/** 사용자 정보 변경 API **/
-// router.patch('/users/', UserToken, async (req, res, next) => {
-//   try {
-//     const { userId } = req.user;
-//     const updatedData = req.body;
-
-//     const userInfo = await prisma.userCharacters.findFirst({
-//       where: { userId: +userId },
-//     });
-
-//     await prisma.$transaction(
-//       async (tx) => {
-//         // 트랜잭션 내부에서 사용자 정보를 수정합니다.
-//         await tx.userCharacters.update({
-//           data: {
-//             ...updatedData,
-//           },
-//           where: {
-//             userId: userInfo.userId,
-//           },
-//         });
-
-//         // 변경된 필드만 UseHistories 테이블에 저장합니다.
-//         // for (let key in updatedData) {
-//         //   if (userInfo[key] !== updatedData[key]) {
-//         //     await tx.userHistories.create({
-//         //       data: {
-//         //         userId: userInfo.userId,
-//         //         changedField: key,
-//         //         oldValue: String(userInfo[key]),
-//         //         newValue: String(updatedData[key]),
-//         //       },
-//         //     });
-//         //   }
-//         // }
-//       },
-//       {
-//         isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted,
-//       },
-//     );
-
-//     return res
-//       .status(200)
-//       .json({ message: '사용자 정보 변경에 성공하였습니다.' });
-//   } catch (err) {
-//     next(err);
-//   }
-// });
 
 
 export default router;

@@ -8,51 +8,48 @@ import { prisma } from '../utils/prisma_client.js';
 export default async function (req, res, next) {
   try {
     const { authorization } = req.cookies;
-    if (!authorization)
-    {
-        req.islogin = false;
-        next();
+    if (!authorization) {
+      req.islogin = false;
+      next();
     }
     console.log(authorization);
-    
-    const [tokenType, token] = authorization.split(' ');
-    
 
-    if (tokenType !== 'Bearer')
-    {
-        req.islogin = false;
-        next();
+    const [tokenType, token] = authorization.split(' ');
+
+
+    if (tokenType !== 'Bearer') {
+      req.islogin = false;
+      return next();
     }
-    
-    if(!token);
+
+    if (!token)
     {
-        req.islogin = false;
-        next();
+      req.islogin = false;
+      return next();
     }
-    
+
 
     const decodedToken = jwt.verify(token, process.env.JSONWEBTOKEN_KEY);
-    
+
     const userId = decodedToken.userId;
-    
+
 
 
     const user = await prisma.users.findFirst({
       where: { UserId: userId },
     });
     if (!user) {
-        req.islogin = false;
-        next();
+      req.islogin = false;
+      return next();
     }
-   
 
-    
+
+
 
     // req.user에 사용자 정보를 저장합니다.
-    
+
     req.islogin = true;
-    next();
-    console.log("next next")
+    return next();
   } catch (error) {
     res.clearCookie('authorization');
     //return res.status(400).json({message : error.message});

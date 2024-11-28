@@ -85,7 +85,7 @@ router.delete('/characters/:characterId', UserToken, async (req, res, next) => {
 
 
 
-    const user = await prisma.userCharacters.findFirst({ where: { UserId : userId, charId: +characterId } });
+    const user = await prisma.userCharacters.findFirst({ where: { UserId: userId, charId: +characterId } });
 
     if (!user)
       return res.status(401).json({ message: '존재하지 않는 캐릭터입니다.' });
@@ -109,48 +109,63 @@ router.delete('/characters/:characterId', UserToken, async (req, res, next) => {
 // // src/routes/users.route.js
 
 // /** 캐릭터 상세 조회 API **/
-router.get('/characters/:characterId',logincheck, async (req, res, next) => {
-  const { characterId } = req.params;
-  const islogin = req.islogin;
+router.get('/characters/:characterId', logincheck, async (req, res, next) => {
+  try {
+    const { characterId } = req.params;
+    const islogin = req.islogin;
 
-  const characterlist = await prisma.userCharacters.findFirst({
-    where: {
-      charId: +characterId
-    },
-    select: {
-      name: true,
-      level: true,
-      status: true,
-      money : islogin,
-    }
-  })
+    const characterlist = await prisma.userCharacters.findFirst({
+      where: {
+        charId: +characterId
+      },
+      select: {
+        name: true,
+        level: true,
+        status: true,
+        money: islogin,
+      }
 
-  return res.status(200).json({ data: characterlist });
+    })
+
+    return res.status(200).json({ data: characterlist });
+  }
+  catch (err) {
+    return res.status(404).json({ data: err });
+  }
+
 });
 
+//캐릭터 전체 조회
 router.get('/characters', logincheck, async (req, res, next) => {
-  const islogin = req.islogin;
+  try {
+    const islogin = req.islogin;
+    console.log(islogin);
 
-  const characterlist = await prisma.userCharacters.findMany({
-    select : {
-      name: true,
-      level: true,
-      status: true,
-      money : islogin,
-    }
-  })
+    const characterlist = await prisma.userCharacters.findMany({
+      select: {
+        name: true,
+        level: true,
+        status: true,
+        money: islogin,
+      }
+    })
 
-  return res.status(200).json({ data: characterlist });
+    return res.status(200).json({ data: characterlist });
+  }
+  catch (err) {
+    return res.status(200).json({ data: err });
+  }
+
 });
 
 router.patch('/characters/:characterId', UserToken, async (req, res, next) => {
   try {
     const { userId } = req.userId;
     const updatedData = req.body;
-    const {characterId} = req.params;
+    const { characterId } = req.params;
 
     const characterInfo = await prisma.userCharacters.findFirst({
-      where: { UserId : userId, charId : +characterId },
+      where: { UserId: userId, charId: +characterId },
     });
 
     const updated = await prisma.$transaction(
@@ -162,7 +177,7 @@ router.patch('/characters/:characterId', UserToken, async (req, res, next) => {
           },
           where: {
             userId: characterInfo.userId,
-            charId : +characterId,
+            charId: +characterId,
           },
         })];
 
@@ -179,7 +194,7 @@ router.patch('/characters/:characterId', UserToken, async (req, res, next) => {
         //     });
         //   }
         // }
-        
+
       },
       {
         isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted,
@@ -190,11 +205,63 @@ router.patch('/characters/:characterId', UserToken, async (req, res, next) => {
       .status(200)
       .json({ message: updated });
   } catch (err) {
-    next(err);
+    return res
+      .status(404)
+      .json({ message: "캐릭터 정보 수정이 안 되었습니다." });
   }
 });
 
+router.patch('/characters/:characterId/get_money', logincheck, async (req, res, next) => {
+  try {
+    const {userId} = req.userId;
+    const { characterId } = req.params;
+    const { money } = req.body;
+    const islogin = req.islogin;
+    
+    if(!islogin)
+    {
+      return res.status(404).json({error : "로그인 안 됨."})
+    }
 
+    const findcharacter = await prisma.userCharacters.findFirst({
+      where: {
+        charId: +characterId
+      }
+    });
+    console.log(characterId)
+    console.log(money);
+    console.log(userId)
+
+    if (findcharacter) {
+      throw new Error("오류 발생");
+    }
+
+    console.log("확인")
+
+    const updated = await prisma.userCharacters.update({
+      where: {
+        UserId: userid,
+        charId: characterId
+      },
+      data: {
+        money: (findcharacter.money + Number(money))
+      }
+    })
+
+    console.log("확인")
+
+    return res
+      .status(200)
+      .json({ data: updated });
+  }
+  catch (err) {
+    return res
+      .status(404)
+      .json({ message: "캐릭터 정보 수정이 안 되었습니다." });
+  }
+
+
+})
 
 
 

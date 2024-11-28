@@ -62,13 +62,16 @@ router.post('/items', async (req, res, next) => {
 
 /** 아이템 수정 **/
 router.patch('/items/:itemId', async (req, res, next) => {
-  const { itemId } = req.params;
+  try
+  {
+    const { itemId } = req.params;
   const check_body = req.body;
   const items = await prisma.items.findFirst({ where: { itemId: +itemId } });
 
   if (!items)
     return res.status(401).json({ message: '존재하지 않는 아이템입니다.' });
   // 입력받은 사용자의 비밀번호와 데이터베이스에 저장된 비밀번호를 비교합니다.
+
 
   const changedItem = await prisma.items.update({
     data: {
@@ -82,60 +85,66 @@ router.patch('/items/:itemId', async (req, res, next) => {
 
 
 
-  return res.status(201).json({ message: '로그인 성공' });
+  return res.status(201).json({ data: changedItem });
+  }
+  catch (err)
+  {
+    return res.status(404).json({errormessage : err})
+  }
+  
 });
 
 
 // src/routes/users.router.js
 
-/** 사용자 정보 변경 API **/
-router.patch('/users/', UserToken, async (req, res, next) => {
+/** 아이템 전체 조회 **/
+router.get('/items', async (req, res, next) => {
   try {
-    const { userId } = req.user;
-    const updatedData = req.body;
+    const item_list = await prisma.items.findMany({
+      select : {
+        itemId : true,
+        name : true,
+        ItemPrice : true,
+        ItemType : true,
 
-    const userInfo = await prisma.userInfos.findFirst({
-      where: { userId: +userId },
-    });
-
-    await prisma.$transaction(
-      async (tx) => {
-        // 트랜잭션 내부에서 사용자 정보를 수정합니다.
-        await tx.userInfos.update({
-          data: {
-            ...updatedData,
-          },
-          where: {
-            userId: userInfo.userId,
-          },
-        });
-
-        // 변경된 필드만 UseHistories 테이블에 저장합니다.
-        for (let key in updatedData) {
-          if (userInfo[key] !== updatedData[key]) {
-            await tx.userHistories.create({
-              data: {
-                userId: userInfo.userId,
-                changedField: key,
-                oldValue: String(userInfo[key]),
-                newValue: String(updatedData[key]),
-              },
-            });
-          }
-        }
-      },
-      {
-        isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted,
-      },
-    );
+      }
+    })
 
     return res
       .status(200)
-      .json({ message: '사용자 정보 변경에 성공하였습니다.' });
+      .json({ data : item_list });
   } catch (err) {
     next(err);
   }
 });
+
+router.get('/items/:itemid', async (req, res, next) => {
+  try {
+    const {itemid} = req.params;
+    const item_list = await prisma.items.findFirst({
+      select : {
+        itemId : true,
+        name : true,
+        ItemPrice : true,
+        ItemType : true,
+
+      },
+      where : {
+        itemId : +itemid
+      }
+    })
+
+    return res
+      .status(200)
+      .json({ data : item_list });
+  } catch (err) {
+    return res
+      .status(404)
+      .json({ errormessage : err });
+  }
+});
+
+
 
 
 export default router;
