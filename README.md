@@ -99,6 +99,8 @@ export default async function (req, res, next) {
 
 
 - 아이템의 생성, 조회
+
+|코드|선언|보디|기능|
 |---|---|---|---|
 |/items|post|"name","status" ,"ItemPrice" ,"ItemType"|아이템을 조회 후 추가한다.|
 |/items|get|{}|전체 아이템을 조회합니다.|
