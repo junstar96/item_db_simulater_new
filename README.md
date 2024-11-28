@@ -85,10 +85,7 @@ export default async function (req, res, next) {
 |코드|선언|보디|기능|
 |---|---|---|---|
 |/sign-up|post|{}|회원가입을 한다.|
-|/sign-in|get|{{
-	"name" : "아이디",
-	"password" : "비밀번호"
-}}|아이디와 비밀번호를 조회하고 값이 맞다면 로그인을 한다. (토큰을 발급한다.)|
+|/sign-in|get|"name" ,"password"|아이디와 비밀번호를 조회하고 값이 맞다면 로그인을 한다. (토큰을 발급한다.)|
 
 - 캐릭터의 생성, 조회, 수정,삭제 
 
@@ -105,11 +102,9 @@ export default async function (req, res, next) {
 
 - 아이템의 생성, 조회
 |---|---|---|---|
-|/items|post|{
-	"name" : "뒤틀린 황천의 국수2",
-	"status" : {"health" : 300, "power" : 10},
-	"ItemPrice" : 500,
-	"ItemType" : "potion"
-}|아이템을 조회 후 추가한다.|
+|/items|post|{"name",
+	"status" ,
+	"ItemPrice" ,
+	"ItemType"|아이템을 조회 후 추가한다.|
 |/items|get|{}|전체 아이템을 조회합니다.|
 |/items/:itemId|get|{}|원하는 아이템의 정보를 조회한다.|
