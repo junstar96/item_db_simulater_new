@@ -91,9 +91,7 @@ export default async function (req, res, next) {
 
 |코드|선언|보디|기능|
 |---|---|---|---|
-|/characters|post|{
-	"name" : "캐릭터 이름"
-}|캐릭터 이름을 받고 캐릭터를 만듭니다.|
+|/characters|post|"name"|캐릭터 이름을 받고 캐릭터를 만듭니다.|
 |/characters|get|{}|전체 캐릭터를 조회합니다. 로그인이 안 되어 있다면 소지금액은 표시되지 않습니다.|
 |/characters/:characterId|get|{}|원하는 캐릭터의 정보를 조회한다.|
 |/characters/:characterId|patch|||
@@ -102,9 +100,6 @@ export default async function (req, res, next) {
 
 - 아이템의 생성, 조회
 |---|---|---|---|
-|/items|post|{"name",
-	"status" ,
-	"ItemPrice" ,
-	"ItemType"|아이템을 조회 후 추가한다.|
+|/items|post|"name","status" ,"ItemPrice" ,"ItemType"|아이템을 조회 후 추가한다.|
 |/items|get|{}|전체 아이템을 조회합니다.|
 |/items/:itemId|get|{}|원하는 아이템의 정보를 조회한다.|
